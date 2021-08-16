@@ -3,8 +3,11 @@ using System.Diagnostics;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading;
+using System.Threading.Tasks;
+using Drizzle.Editor.Views;
 using Drizzle.Lingo.Runtime;
 using Drizzle.Logic;
+using Drizzle.Logic.Rendering;
 using Drizzle.Ported;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -12,7 +15,7 @@ using Serilog;
 
 namespace Drizzle.Editor.ViewModels.Render
 {
-    public sealed class RenderViewModel : ViewModelBase
+    public sealed class RenderViewModel : ViewModelBase, ILingoRuntimeManager
     {
         private LevelRenderer? _renderer;
         private Thread? _renderThread;
@@ -42,8 +45,8 @@ namespace Drizzle.Editor.ViewModels.Render
         public void StartRendering(LingoRuntime clonedRuntime)
         {
             var movie = (MovieScript)clonedRuntime.MovieScriptInstance;
-            LevelName = movie.global_gloadedname;
-            var countCameras = (int)movie.global_gcameraprops.cameras.count;
+            LevelName = movie.gLoadedName;
+            var countCameras = (int)movie.gCameraProps.cameras.count;
 
             RenderProgressMax = countCameras * 10 + 1;
 
@@ -149,7 +152,23 @@ namespace Drizzle.Editor.ViewModels.Render
 
         public void OpenCastViewer()
         {
+            new LingoCastViewer { DataContext = new LingoCastViewerViewModel(this) }.Show();
+        }
 
+        public Task Exec(Action<LingoRuntime> action)
+        {
+            if (_renderer == null)
+                throw new InvalidOperationException();
+
+            return _renderer.Exec(action);
+        }
+
+        public Task<T> Exec<T>(Func<LingoRuntime, T> func)
+        {
+            if (_renderer == null)
+                throw new InvalidOperationException();
+
+            return _renderer.Exec(func);
         }
     }
 }

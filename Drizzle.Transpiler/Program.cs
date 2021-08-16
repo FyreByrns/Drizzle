@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -86,23 +87,32 @@ namespace Drizzle.Transpiler
             }
         };
 
-        private static readonly string SourcesRoot = Path.Combine("..", "..", "..", "..", "LingoSource");
-
-        private static readonly string SourcesDest =
-            Path.Combine("..", "..", "..", "..", "Drizzle.Ported", "Translated");
-
         private const string OutputNamespace = "Drizzle.Ported";
 
         private static void Main(string[] args)
         {
-            var scripts = Directory.GetFiles(SourcesRoot, "*.lingo")
+            var sourcesRoot = Path.Combine("..", "..", "..", "..", "LingoSource");
+            var sourcesDest = Path.Combine("..", "..", "..", "..", "Drizzle.Ported", "Translated");
+
+            if (args.Length == 2)
+            {
+                sourcesRoot = args[0];
+                sourcesDest = args[1];
+            }
+
+            var scripts = Directory.GetFiles(sourcesRoot, "*.lingo")
                 .AsParallel()
                 .Select(n =>
                 {
                     using var reader = new StreamReader(n);
-                    var script = LingoParser.Script.ParseOrThrow(reader);
+                    var script = LingoParser.Script.Parse(reader);
+                    if (!script.Success)
+                    {
+                        throw new Exception($"Parsing failed in file {n}\n{script.Error!.RenderErrorMessage()}");
+                    }
+
                     var name = Path.GetFileNameWithoutExtension(n);
-                    return (name, script);
+                    return (name, script: script.Value);
                 })
                 .ToDictionary(n => n.name, n => n.script);
 
@@ -119,7 +129,7 @@ namespace Drizzle.Transpiler
                 .Select(h => h.Name)
                 .ToHashSet(StringComparer.InvariantCultureIgnoreCase);
 
-            var globalContext = new GlobalContext(movieHandlers);
+            var globalContext = new GlobalContext(movieHandlers, sourcesDest);
 
             OutputMovieScripts(movieScripts, globalContext);
             OutputParentScripts(parentScripts, globalContext);
@@ -134,7 +144,7 @@ namespace Drizzle.Transpiler
         {
             foreach (var (name, script) in scripts)
             {
-                var path = Path.Combine(SourcesDest, $"Behavior.{name}.cs");
+                var path = Path.Combine(ctx.SourcesDest, $"Behavior.{name}.cs");
                 using var file = new StreamWriter(path);
 
                 OutputSingleBehaviorScript(name, script, file, ctx);
@@ -150,7 +160,7 @@ namespace Drizzle.Transpiler
             WriteFileHeader(writer);
             writer.WriteLine($"//\n// Behavior script: {name}\n//");
             writer.WriteLine("[BehaviorScript]");
-            writer.WriteLine($"public sealed class {name} : LingoBehaviorScript {{");
+            writer.WriteLine($"public sealed partial class {name} : LingoBehaviorScript {{");
 
             EmitScriptBody(name, script, writer, ctx, isMovieScript: false);
 
@@ -164,7 +174,7 @@ namespace Drizzle.Transpiler
         {
             foreach (var (name, script) in scripts)
             {
-                var path = Path.Combine(SourcesDest, $"Parent.{name}.cs");
+                var path = Path.Combine(ctx.SourcesDest, $"Parent.{name}.cs");
                 using var file = new StreamWriter(path);
 
                 OutputSingleParentScript(name, script, file, ctx);
@@ -180,7 +190,7 @@ namespace Drizzle.Transpiler
             WriteFileHeader(writer);
             writer.WriteLine($"//\n// Parent script: {name}\n//");
             writer.WriteLine("[ParentScript]");
-            writer.WriteLine($"public sealed class {name} : LingoParentScript {{");
+            writer.WriteLine($"public sealed partial class {name} : LingoParentScript {{");
 
             EmitScriptBody(name, script, writer, ctx, isMovieScript: false);
 
@@ -188,9 +198,9 @@ namespace Drizzle.Transpiler
             writer.WriteLine("}\n}");
         }
 
-        private static void OutputMovieGlobals(GlobalContext globalContext)
+        private static void OutputMovieGlobals(GlobalContext ctx)
         {
-            var path = Path.Combine(SourcesDest, "Movie._globals.cs");
+            var path = Path.Combine(ctx.SourcesDest, "Movie._globals.cs");
             using var file = new StreamWriter(path);
 
             WriteFileHeader(file);
@@ -198,9 +208,9 @@ namespace Drizzle.Transpiler
             file.WriteLine($"//\n// Movie globals\n//");
             file.WriteLine("public sealed partial class MovieScript {");
 
-            foreach (var glob in globalContext.AllGlobals)
+            foreach (var glob in ctx.AllGlobals)
             {
-                file.WriteLine($"[LingoGlobal] public dynamic global_{glob.ToLower()};");
+                file.WriteLine($"[LingoGlobal] public dynamic {glob};");
             }
 
             file.WriteLine("}\n}");
@@ -212,8 +222,8 @@ namespace Drizzle.Transpiler
         {
             foreach (var (name, script) in scripts)
             {
-                var path = Path.Combine(SourcesDest, $"Movie.{name}.cs");
-                Directory.CreateDirectory(SourcesDest);
+                var path = Path.Combine(ctx.SourcesDest, $"Movie.{name}.cs");
+                Directory.CreateDirectory(ctx.SourcesDest);
                 using var file = new StreamWriter(path);
 
                 OutputSingleMovieScript(name, script, file, ctx);
@@ -255,6 +265,8 @@ namespace Drizzle.Transpiler
             var allHandlers = script.Nodes.OfType<AstNode.Handler>().Select(h => h.Name)
                 .ToHashSet(StringComparer.InvariantCultureIgnoreCase);
             var scriptContext = new ScriptContext(ctx, allGlobals, allHandlers, isMovieScript);
+
+            ctx.AllGlobals.UnionWith(allGlobals);
 
             var props = new HashSet<string>();
             foreach (var prop in script.Nodes.OfType<AstNode.Property>().SelectMany(p => p.Identifiers))
@@ -310,7 +322,6 @@ namespace Drizzle.Transpiler
             }
 
             GenerateParamCountOverloads(writer, quirks, script);
-            ctx.AllGlobals.UnionWith(allGlobals);
         }
 
         private static void GenerateParamCountOverloads(
@@ -395,7 +406,7 @@ namespace Drizzle.Transpiler
                 default:
                     if (node is AstNode.VariableName
                         or AstNode.MemberProp or AstNode.MemberIndex or AstNode.BinaryOperator or AstNode.UnaryOperator
-                        or AstNode.String or AstNode.Integer or AstNode.Decimal or AstNode.Symbol or AstNode.List or
+                        or AstNode.String or AstNode.Number or AstNode.Symbol or AstNode.List or
                         AstNode.Property)
                     {
                         Console.WriteLine($"Warning: {ctx.Name} has loose expression {node}");
@@ -480,7 +491,7 @@ namespace Drizzle.Transpiler
 
             ctx.Writer.WriteLine($"for (int {loopTmp} = (int) ({start}); {loopTmp} <= {end}; {loopTmp}++) {{");
 
-            MakeLoopTmp(ctx, name, loopTmp);
+            MakeLoopTmp(ctx, name, $"(LingoNumber){loopTmp}");
             WriteStatementBlock(node.Block, ctx);
 
             ctx.Writer.WriteLine("}");
@@ -490,7 +501,7 @@ namespace Drizzle.Transpiler
 
         private static void MakeLoopTmp(HandlerContext ctx, string name, string loopTmp)
         {
-            if (!IsGlobal(name, ctx) && ctx.Locals.Add(name))
+            if (!IsGlobal(name, ctx, out _) && ctx.Locals.Add(name))
                 ctx.DeclaredLocals.Add(name);
 
             ctx.Writer.WriteLine($"{WriteVariableNameCore(name, ctx)} = {loopTmp};");
@@ -514,12 +525,16 @@ namespace Drizzle.Transpiler
         {
             // Check if all expressions are literal.
             // If so we can translate it as a switch statement.
-            var literals = node.Cases.SelectMany(c => c.exprs)
-                .All(e => e is AstNode.Constant or AstNode.Integer or AstNode.String);
+            var literals = node.Cases.SelectMany(c => c.exprs).All(e => e is AstNode.Constant or AstNode.String);
+
+            var allInts = node.Cases.All(c => c.exprs.All(e => e is AstNode.Number { Value: { IsDecimal: false } }));
+            literals |= allInts;
 
             if (literals)
             {
                 ctx.Writer.Write("switch (");
+                if (allInts)
+                    ctx.Writer.Write("(int)");
                 ctx.Writer.Write(WriteExpression(node.Expression, ctx));
                 // If this is a string switch, .ToLower() it and switch on lowercase values.
                 // to avoid any case problems.
@@ -534,6 +549,11 @@ namespace Drizzle.Transpiler
                         ctx.Writer.Write("case ");
                         if (expr is AstNode.String str)
                             ctx.Writer.Write(DoWriteString(str.Value.ToLowerInvariant()));
+                        else if (expr is AstNode.Number num)
+                        {
+                            Debug.Assert(allInts);
+                            ctx.Writer.Write(num.Value.ToString());
+                        }
                         else
                             ctx.Writer.Write(WriteExpression(expr, ctx));
                         ctx.Writer.WriteLine(':');
@@ -584,7 +604,7 @@ namespace Drizzle.Transpiler
             {
                 var name = simpleTarget.Name.ToLower();
                 // Define local variable if necessary.
-                if (!IsGlobal(name, ctx))
+                if (!IsGlobal(name, ctx, out _))
                 {
                     // Local variable, not global
                     // Make sure it's not a parameter though.
@@ -605,9 +625,8 @@ namespace Drizzle.Transpiler
             {
                 AstNode.BinaryOperator binaryOperator => WriteBinaryOperator(binaryOperator, ctx, param),
                 AstNode.Constant constant => WriteConstant(constant, ctx),
-                AstNode.Decimal @decimal => WriteDecimal(@decimal, ctx),
+                AstNode.Number number => WriteNumber(number, ctx),
                 AstNode.GlobalCall globalCall => WriteGlobalCall(globalCall, ctx),
-                AstNode.Integer integer => WriteInteger(integer, ctx),
                 AstNode.List list => WriteList(list, ctx),
                 AstNode.MemberCall memberCall => WriteMemberCall(memberCall, ctx),
                 AstNode.MemberIndex memberIndex => WriteMemberIndex(memberIndex, ctx),
@@ -690,23 +709,32 @@ namespace Drizzle.Transpiler
 
         private static string WriteVariableNameCore(string name, HandlerContext ctx)
         {
-            name = name.ToLower();
+            var lowered = name.ToLower();
 
-            if (name == "me")
+            if (lowered == "me")
                 return "this";
 
-            if (ctx.Locals.Contains(name))
-                return name;
+            if (ctx.Locals.Contains(lowered))
+                return lowered;
 
-            if (IsGlobal(name, ctx))
-                return $"{MovieScriptPrefix(ctx)}global_{name}";
+            if (IsGlobal(name, ctx, out var casedName))
+                return $"{MovieScriptPrefix(ctx)}{casedName}";
 
             return $"_global.{name}";
         }
 
-        private static bool IsGlobal(string name, HandlerContext ctx)
+        private static bool IsGlobal(string name, HandlerContext ctx, [NotNullWhen(true)] out string? caseName)
         {
-            return ctx.Parent.AllGlobals.Contains(name) || ctx.Globals.Contains(name);
+            if (!ctx.Parent.AllGlobals.Contains(name) && !ctx.Globals.Contains(name))
+            {
+                caseName = null;
+                return false;
+            }
+
+            if (!ctx.Parent.Parent.AllGlobals.TryGetValue(name, out caseName))
+                throw new InvalidOperationException("Global declared but not in all globals list?");
+
+            return true;
         }
 
         private static string WriteUnaryOperator(
@@ -787,10 +815,6 @@ namespace Drizzle.Transpiler
 
         private static string WriteMemberProp(AstNode.MemberProp node, HandlerContext ctx)
         {
-            if (node.Property == "float")
-                return WriteGlobalCall("floatmember_helper", ctx, node.Expression);
-            if (node.Property == "integer")
-                return WriteGlobalCall("integermember_helper", ctx, node.Expression);
             if (node.Property == "char")
                 return WriteGlobalCall("charmember_helper", ctx, node.Expression);
             if (node.Property == "line")
@@ -826,12 +850,6 @@ namespace Drizzle.Transpiler
             return $"new LingoList {{ {string.Join(',', args)} }}";
         }
 
-        private static string WriteInteger(AstNode.Integer node, HandlerContext ctx)
-        {
-            // That was easy.
-            return node.Value.ToString();
-        }
-
         private static string WriteGlobalCall(AstNode.GlobalCall node, HandlerContext ctx)
         {
             var args = node.Arguments.Select(a => WriteExpression(a, ctx));
@@ -856,9 +874,9 @@ namespace Drizzle.Transpiler
             return ctx.Parent.IsMovieScript ? "" : "_movieScript.";
         }
 
-        private static string WriteDecimal(AstNode.Decimal node, HandlerContext ctx)
+        private static string WriteNumber(AstNode.Number node, HandlerContext ctx)
         {
-            return $"new LingoDecimal({node.Value.Value:R})";
+            return $"new LingoNumber({node.Value})";
         }
 
         private static string WriteConstant(AstNode.Constant node, HandlerContext ctx)
@@ -1006,7 +1024,8 @@ namespace Drizzle.Transpiler
         private static readonly HashSet<string> CSharpKeyWords = new HashSet<string>
         {
             "new",
-            "string"
+            "string",
+            "float"
         };
 
         private static string WriteSanitizeIdentifier(string identifier)
@@ -1016,13 +1035,15 @@ namespace Drizzle.Transpiler
 
         private sealed class GlobalContext
         {
-            public GlobalContext(HashSet<string> movieHandlers)
+            public GlobalContext(HashSet<string> movieHandlers, string sourcesDest)
             {
                 MovieHandlers = movieHandlers;
+                SourcesDest = sourcesDest;
             }
 
             public HashSet<string> AllGlobals { get; } = new(StringComparer.InvariantCultureIgnoreCase);
             public HashSet<string> MovieHandlers { get; }
+            public string SourcesDest { get; }
         }
 
         private sealed class ScriptContext
