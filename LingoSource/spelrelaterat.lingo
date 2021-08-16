@@ -9,15 +9,15 @@ on giveMiddleOfTile(pos)
   return point((pos.locH*20)-10, (pos.locV*20)-10)-- - point(8,8)
 end 
 
-on restrict(val, low, high)
-  if val<low then
-    return low
-  else if val > high then
-    return high
-  else
-    return val
-  end if
-end
+--on restrict(val, low, high)
+--  if val<low then
+--    return low
+--  else if val > high then
+--    return high
+--  else
+--    return val
+--  end if
+--end
 
 on restrictWithFlip(val, low, high)
   if val<low then
