@@ -135,7 +135,7 @@ namespace Drizzle.Transpiler
             OutputParentScripts(parentScripts, globalContext);
             OutputBehaviorScripts(behaviorScripts, globalContext);
 
-            OutputMovieGlobals(globalContext);
+            //OutputMovieGlobals(globalContext);
         }
 
         private static void OutputBehaviorScripts(
