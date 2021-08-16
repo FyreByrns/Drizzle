@@ -221,7 +221,7 @@ namespace Drizzle.Lingo.Runtime
 
         public string the_platform => "win";
 
-        public LingoSprite sprite(int a)
+        public LingoSprite sprite(LingoNumber a)
         {
             // Log.Warning("sprite() not implemented");
             return new LingoSprite();
