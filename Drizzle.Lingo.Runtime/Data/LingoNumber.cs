@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Drizzle.Lingo.Runtime
@@ -116,6 +116,10 @@ namespace Drizzle.Lingo.Runtime
         public static explicit operator int(LingoNumber x) => x.IntValue;
         public static explicit operator float(LingoNumber x) => (float)x.DecimalValue;
         public static explicit operator double(LingoNumber x) => x.DecimalValue;
+
+        // probably a bad idea
+        public static implicit operator LingoNumber(bool x) => new(x ? 1 : 0);
+        public static implicit operator bool(LingoNumber x) => x.IntValue == 1;
 
         public bool Equals(LingoNumber other)
         {
