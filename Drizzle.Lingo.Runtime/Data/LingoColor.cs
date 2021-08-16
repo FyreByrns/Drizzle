@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using Serilog;
 
@@ -114,6 +114,10 @@ namespace Drizzle.Lingo.Runtime
         public override string ToString()
         {
             return $"color( {RedByte}, {GreenByte}, {BlueByte} )";
+        }
+
+        public static class Presets {
+            public static readonly LingoColor White = new(255, 255, 255);
         }
     }
 }
