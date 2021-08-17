@@ -113,7 +113,7 @@ namespace Drizzle.Lingo.Runtime
         public static implicit operator LingoNumber(int x) => new(x);
         public static implicit operator LingoNumber(float x) => new(x);
         public static implicit operator LingoNumber(double x) => new(x);
-        public static explicit operator int(LingoNumber x) => x.IntValue;
+        public static implicit operator int(LingoNumber x) => x.IntValue;
         public static explicit operator float(LingoNumber x) => (float)x.DecimalValue;
         public static explicit operator double(LingoNumber x) => x.DecimalValue;
 
