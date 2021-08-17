@@ -118,6 +118,7 @@ namespace Drizzle.Lingo.Runtime
 
         public static class Presets {
             public static readonly LingoColor White = new(255, 255, 255);
+            public static readonly LingoColor Black = new(0  , 0  , 0  );
         }
     }
 }
