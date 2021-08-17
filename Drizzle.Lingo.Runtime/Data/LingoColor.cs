@@ -68,6 +68,9 @@ namespace Drizzle.Lingo.Runtime
             BlueByte = (byte)b;
         }
 
+        public LingoColor(LingoNumber r, LingoNumber g, LingoNumber b)
+            : this(r.IntValue, g.IntValue, b.IntValue) {}
+
         public static implicit operator LingoColor(int paletteIndex)
         {
             var palCol = Palette[paletteIndex];
@@ -119,6 +122,18 @@ namespace Drizzle.Lingo.Runtime
         public static class Presets {
             public static readonly LingoColor White = new(255, 255, 255);
             public static readonly LingoColor Black = new(0  , 0  , 0  );
+
+            public static readonly LingoColor Red = new(255, 0, 0);
+            public static readonly LingoColor Green = new(0, 255, 0);
+            public static readonly LingoColor Blue = new(0, 0, 255);
+
+            public static LingoColor Magenta = new(255, 0, 255);
+            public static LingoColor Yellow = new(255, 255, 0);
+            public static LingoColor Cyan = new(0, 255, 255);
+
+            public static LingoColor DarkRed = new(150, 0, 0);
+            public static LingoColor DarkGreen = new(0, 150, 0);
+            public static LingoColor DarkBlue = new(0, 0, 150);
         }
     }
 }
