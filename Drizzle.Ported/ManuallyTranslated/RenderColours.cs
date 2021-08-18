@@ -6,9 +6,7 @@ namespace Drizzle.Ported {
         public void exitframe() {
             if (_movieScript.gViewRender) {
                 if (_global._key.keypressed(48) &
-                    LingoGlobal.op_ne_b(
-                        _global._movie.window.sizestate,
-                        new LingoSymbol("minimized"))) {
+                    _global._movie.window.sizestate != new LingoSymbol("minimized")) {
                     _global.go(9);
                 }
 
@@ -29,7 +27,7 @@ namespace Drizzle.Ported {
             LingoPoint displacement = new();
             LingoNumber otherFogFac;
             LingoNumber rainbowFac;
-            int c = (int)_movieScript.c;
+            int c = _movieScript.c;
 
             _global.sprite(59).locv = _movieScript.c - 8;
 
@@ -175,7 +173,7 @@ namespace Drizzle.Ported {
             }
 
             c++;
-            if(c > 800) {
+            if (c > 800) {
                 c = 1;
                 _movieScript.keepLooping = false;
             }
