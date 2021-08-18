@@ -14,6 +14,11 @@ namespace Drizzle.Transpiler
 {
     internal static class Program
     {
+        public static readonly HashSet<string> ReplacedMovieHandlers = new()
+        {
+            "restrict"
+        };
+
         public static readonly HashSet<string> MovieScripts = new()
         {
             "testDraw",
@@ -127,6 +132,7 @@ namespace Drizzle.Transpiler
                 .SelectMany(s => s.Nodes)
                 .OfType<AstNode.Handler>()
                 .Select(h => h.Name)
+                .Union(ReplacedMovieHandlers)
                 .ToHashSet(StringComparer.InvariantCultureIgnoreCase);
 
             var globalContext = new GlobalContext(movieHandlers, sourcesDest);
