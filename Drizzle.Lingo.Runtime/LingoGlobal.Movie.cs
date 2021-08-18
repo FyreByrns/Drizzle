@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Dynamic;
 
 namespace Drizzle.Lingo.Runtime
@@ -46,6 +46,8 @@ namespace Drizzle.Lingo.Runtime
             public LingoNumber resizable { get; set; }
             public LingoRect rect { get; set; }
             public LingoSymbol sizestate => new ("normal");
+
+            public bool Minimized => sizestate == new LingoSymbol("minimized");
         }
     }
 }
