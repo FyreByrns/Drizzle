@@ -120,7 +120,7 @@ namespace Drizzle.Ported {
 
                     // lit areas are just 90 ahead of unlit areas
                     col.red = ((paletteCol - 1) * 30) + foregroundDepth;
-                    if (_global.member("shadowImage").image.getpixel(q - 1, c - 1) == LingoColor.Presets.Black) {
+                    if (_global.member("shadowImage").image.getpixel(q - 1, c - 1) != LingoColor.Presets.Black) {
                         col.red += 90;
                     }
 
