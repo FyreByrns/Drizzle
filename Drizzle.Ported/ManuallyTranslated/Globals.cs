@@ -12,5 +12,11 @@ namespace Drizzle.Ported {
         [LingoGlobal] public LingoList fogDptsL;
         [LingoGlobal] public bool gAnyDecals;
         [LingoGlobal] public LingoList gDecalColors;
+        [LingoGlobal] public LingoNumber vertRepeater;
+        [LingoGlobal] public LingoNumber r;
+        [LingoGlobal] public LingoPoint gRenderCameraTilePos;
+        [LingoGlobal] public LingoNumber effectSeed;
+
+
     }
 }
