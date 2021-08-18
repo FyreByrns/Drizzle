@@ -167,7 +167,7 @@ namespace Drizzle.Ported {
 
                     col.green = greenCol + dark ? 16 : 0;
                     if (layer == 0) {
-                        finalImage.setpixel(q - 1, c - 1, LingoColor.Presets.Red);
+                        finalImage.setpixel(q - 1, c - 1, LingoColor.Presets.White);
                     } else {
                         finalImage.setpixel(q - 1, c - 1, col);
                     }
