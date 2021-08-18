@@ -90,22 +90,22 @@ on buttonClicked me, bttn
       end if
       sprite(23).member = member("ecol" & string(gLOprops.eCol2))
     "button more flies":
-      gEditLizard[2] = restrict(gEditLizard[2]+1, 0, 40)
+      --gEditLizard[2] = restrict(gEditLizard[2]+1, 0, 40)
       member("addLizardFlies").text = string(gEditLizard[2])
     "button less flies":
-      gEditLizard[2] = restrict(gEditLizard[2]-1, 0, 40)
+      --gEditLizard[2] = restrict(gEditLizard[2]-1, 0, 40)
       member("addLizardFlies").text = string(gEditLizard[2])
     "button more time":
-      gEditLizard[3] = restrict(gEditLizard[3]+1, 0, 4000)
+      --gEditLizard[3] = restrict(gEditLizard[3]+1, 0, 4000)
       member("addLizardTime").text = string(gEditLizard[3])
     "button less time":
-      gEditLizard[3] = restrict(gEditLizard[3]-1, 0, 4000)
+      --gEditLizard[3] = restrict(gEditLizard[3]-1, 0, 4000)
       member("addLizardTime").text = string(gEditLizard[3])
     "button super more time":
-      gEditLizard[3] = restrict(gEditLizard[3]+100, 0, 4000)
+      --gEditLizard[3] = restrict(gEditLizard[3]+100, 0, 4000)
       member("addLizardTime").text = string(gEditLizard[3])
     "button super less time":
-      gEditLizard[3] = restrict(gEditLizard[3]-100, 0, 4000)
+      --gEditLizard[3] = restrict(gEditLizard[3]-100, 0, 4000)
       member("addLizardTime").text = string(gEditLizard[3])
     "button lizard hole":
       me.nextHole()
