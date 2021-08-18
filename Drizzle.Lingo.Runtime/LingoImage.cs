@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -73,11 +73,11 @@ namespace Drizzle.Lingo.Runtime
             return getpixel(point.loch, point.locv);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public LingoColor getpixel(LingoNumber x, LingoNumber y)
-        {
-            return getpixel((int)x, (int)y);
-        }
+        //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        //public LingoColor getpixel(LingoNumber x, LingoNumber y)
+        //{
+        //    return getpixel((int)x, (int)y);
+        //}
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public LingoColor getpixel(int x, int y)
@@ -122,11 +122,11 @@ namespace Drizzle.Lingo.Runtime
             setpixel(point.loch, point.locv, color);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public void setpixel(LingoNumber x, LingoNumber y, LingoColor color)
-        {
-            setpixel((int)x, (int)y, color);
-        }
+        //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        //public void setpixel(LingoNumber x, LingoNumber y, LingoColor color)
+        //{
+        //    setpixel((int)x, (int)y, color);
+        //}
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         public void setpixel(int x, int y, LingoColor color)

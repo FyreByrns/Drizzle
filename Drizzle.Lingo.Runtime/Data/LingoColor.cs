@@ -68,8 +68,8 @@ namespace Drizzle.Lingo.Runtime
             BlueByte = (byte)b;
         }
 
-        public LingoColor(LingoNumber r, LingoNumber g, LingoNumber b)
-            : this(r.IntValue, g.IntValue, b.IntValue) {}
+        //public LingoColor(LingoNumber r, LingoNumber g, LingoNumber b)
+        //    : this(r.IntValue, g.IntValue, b.IntValue) {}
 
         public static implicit operator LingoColor(int paletteIndex)
         {

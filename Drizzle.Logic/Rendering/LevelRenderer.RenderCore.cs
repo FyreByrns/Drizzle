@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Drizzle.Lingo.Runtime;
@@ -128,7 +128,7 @@ namespace Drizzle.Logic.Rendering
             _runtime.CreateScript<renderPropsStart>().exitframe();
 
             var script = _runtime.CreateScript<renderProps>();
-            while (Movie.keepLooping == 1)
+            while (Movie.keepLooping)
             {
                 RenderStartFrame(RenderStage.RenderPropsPreEffects);
                 script.newframe();
@@ -141,7 +141,7 @@ namespace Drizzle.Logic.Rendering
             _runtime.CreateScript<renderEffectsStart>().exitframe();
 
             var script = _runtime.CreateScript<renderEffects>();
-            while (Movie.keepLooping == 1)
+            while (Movie.keepLooping)
             {
                 var effectsList = (LingoList)Movie.gEEprops.effects;
                 var effectNames = effectsList.List.Select(e => (string)((dynamic)e!).nm).ToArray();
@@ -160,7 +160,7 @@ namespace Drizzle.Logic.Rendering
             _runtime.CreateScript<renderPropsStart>().exitframe();
 
             var script = _runtime.CreateScript<renderProps>();
-            while (Movie.keepLooping == 1)
+            while (Movie.keepLooping)
             {
                 RenderStartFrame(RenderStage.RenderPropsPostEffects);
                 script.newframe();
@@ -173,7 +173,7 @@ namespace Drizzle.Logic.Rendering
             _runtime.CreateScript<renderLightStart>().exitframe();
 
             var script = _runtime.CreateScript<renderLight>();
-            while (Movie.keepLooping == 1)
+            while (Movie.keepLooping)
             {
                 var curr = (int)Movie.c;
                 RenderStartFrame(new RenderStageStatusLight(curr));
@@ -190,7 +190,7 @@ namespace Drizzle.Logic.Rendering
         private void RenderColors()
         {
             var script = _runtime.CreateScript<renderColors>();
-            while (Movie.keepLooping == 1)
+            while (Movie.keepLooping)
             {
                 RenderStartFrame(RenderStage.RenderColors);
                 script.newframe();
